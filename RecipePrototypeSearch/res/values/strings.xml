@@ -21,5 +21,7 @@
 	
 	<!-- Content Description -->
     <string name="desc_list_item_icon">Item Icon</string>
+     <string name="dummy_section_text">Item Icon</string>
+    
     
 </resources>

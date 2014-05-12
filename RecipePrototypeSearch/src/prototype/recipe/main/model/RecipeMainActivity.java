@@ -2,33 +2,29 @@ package prototype.recipe.main.model;
 
 import java.util.ArrayList;
 
+import prototype.recipe.main.adapter.AppSectionsPagerAdapter;
 import prototype.recipe.navigationdrawer.adapter.NavDrawerItem;
 import prototype.recipe.navigationdrawer.model.NavDrawerListAdapter;
-import prototype.recipe.pager.adapter.DemoCollectionPagerAdapter;
 import prototype.search.recipeprototypesearch.R;
 
 import android.os.Bundle;
 import android.app.ActionBar;
-import android.content.Intent;
+import android.app.ActionBar.Tab;
+import android.app.FragmentTransaction;
 import android.content.res.Configuration;
 import android.content.res.TypedArray;
 import android.support.v4.app.ActionBarDrawerToggle;
-import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
-import android.support.v4.app.NavUtils;
-import android.support.v4.app.TaskStackBuilder;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.ListView;
 import android.widget.SearchView;
-import android.widget.TextView;
 
-public class RecipeMainActivity extends FragmentActivity {
+public class RecipeMainActivity extends FragmentActivity implements
+		ActionBar.TabListener {
 
 	// Search view related declarations
 	private SearchView mSearchView;
@@ -40,9 +36,6 @@ public class RecipeMainActivity extends FragmentActivity {
 	// Action bar related declarations
 	private ActionBarDrawerToggle mDrawerToggle;
 	private ActionBar actionBar;
-
-	// ViewPager related declarations
-	private DemoCollectionPagerAdapter mDemoCollectionPagerAdapter;
 	private ViewPager mViewPager;
 
 	// nav drawer title
@@ -51,6 +44,9 @@ public class RecipeMainActivity extends FragmentActivity {
 	// used to store app title
 	private CharSequence mTitle;
 
+	// used to store number of tabs
+	private int mTabIndex;
+
 	// slide menu items
 	private String[] navMenuTitles;
 	private TypedArray navMenuIcons;
@@ -58,12 +54,19 @@ public class RecipeMainActivity extends FragmentActivity {
 	private ArrayList<NavDrawerItem> navDrawerItems;
 	private NavDrawerListAdapter adapter;
 
+	// adapter for tabs
+	AppSectionsPagerAdapter mAppSectionsPagerAdapter;
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_recipe_main);
 
 		mTitle = mDrawerTitle = getTitle();
+
+		// sdevikar: might need to save this number as an instance state so that
+		// it can be retrieved back later
+		mTabIndex = 0;
 
 		// load slide menu items
 		navMenuTitles = getResources().getStringArray(R.array.nav_drawer_items);
@@ -73,7 +76,7 @@ public class RecipeMainActivity extends FragmentActivity {
 				.obtainTypedArray(R.array.nav_drawer_icons);
 
 		mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
-		mDrawerList = (ListView) findViewById(R.id.list_slidermenu);
+		mDrawerList = (ListView) findViewById(R.id.list_drawermenu);
 
 		navDrawerItems = new ArrayList<NavDrawerItem>();
 
@@ -100,7 +103,23 @@ public class RecipeMainActivity extends FragmentActivity {
 		actionBar = getActionBar();
 		actionBar.setDisplayHomeAsUpEnabled(true);
 		actionBar.setHomeButtonEnabled(true);
-		
+		actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+		mViewPager = (ViewPager) findViewById(R.id.tab_pager_layout);
+        mViewPager.setAdapter(mAppSectionsPagerAdapter);
+        mViewPager.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+            @Override
+            public void onPageSelected(int position) {
+                // When swiping between different app sections, select the corresponding tab.
+                // We can also use ActionBar.Tab#select() to do this if we have a reference to the
+                // Tab.
+                actionBar.setSelectedNavigationItem(position);
+            }
+        });
+
+		for (int i = 0; i < 10; i++) {
+			addActionBarTab(i);
+		}
+
 		mDrawerToggle = new ActionBarDrawerToggle(this, mDrawerLayout,
 				R.drawable.ic_drawer, // nav menu toggle icon
 				R.string.app_name, // nav drawer open - description for
@@ -127,14 +146,14 @@ public class RecipeMainActivity extends FragmentActivity {
 			// displayView(0);
 		}
 
-		// tabs related shit here
-		mDemoCollectionPagerAdapter = new DemoCollectionPagerAdapter(
-				getSupportFragmentManager());
+	}
 
-		// Set up the ViewPager, attaching the adapter.
-		mViewPager = (ViewPager) findViewById(R.id.pager);
-		mViewPager.setAdapter(mDemoCollectionPagerAdapter);
-
+	public void addActionBarTab(int i) {
+		ActionBar.Tab newTab = actionBar.newTab();
+		newTab.setText("Category #" + String.valueOf(i + 1));
+		newTab.setTabListener(this).setTag(i);
+		actionBar.addTab(newTab);
+		mTabIndex++;
 	}
 
 	@Override
@@ -163,29 +182,6 @@ public class RecipeMainActivity extends FragmentActivity {
 		// Handle action bar actions click
 		switch (item.getItemId()) {
 		case R.id.action_settings:
-			return true;
-		case android.R.id.home:
-
-			// This is called when the Home (Up) button is pressed in the action
-			// bar.
-			// Create a simple intent that starts the hierarchical parent
-			// activity and
-			// use NavUtils in the Support Package to ensure proper handling of
-			// Up.
-			Intent upIntent = new Intent(this, RecipeMainActivity.class);
-			if (NavUtils.shouldUpRecreateTask(this, upIntent)) {
-				// This activity is not part of the application's task, so
-				// create a new task
-				// with a synthesized back stack.
-				TaskStackBuilder.from(this)
-				// If there are ancestor activities, they should be added here.
-						.addNextIntent(upIntent).startActivities();
-				finish();
-			} else {
-				// This activity is part of the application's task, so simply
-				// navigate up to the hierarchical parent activity.
-				NavUtils.navigateUpTo(this, upIntent);
-			}
 			return true;
 		default:
 			return super.onOptionsItemSelected(item);
@@ -228,25 +224,22 @@ public class RecipeMainActivity extends FragmentActivity {
 		mDrawerToggle.onConfigurationChanged(newConfig);
 	}
 
-	/**
-	 * A dummy fragment representing a section of the app, but that simply
-	 * displays dummy text. This will later be replaced by a grid layout
-	 * fragment with pictures on the grid
-	 */
-	public static class DemoObjectFragment extends Fragment {
+	@Override
+	public void onTabSelected(Tab tab, FragmentTransaction ft) {
+		// TODO Auto-generated method stub
 
-		public static final String ARG_OBJECT = "object";
+	}
 
-		@Override
-		public View onCreateView(LayoutInflater inflater, ViewGroup container,
-				Bundle savedInstanceState) {
-			View rootView = inflater.inflate(
-					R.layout.fragment_collection_object, container, false);
-			Bundle args = getArguments();
-			((TextView) rootView.findViewById(android.R.id.text1))
-					.setText(Integer.toString(args.getInt(ARG_OBJECT)));
-			return rootView;
-		}
+	@Override
+	public void onTabUnselected(Tab tab, FragmentTransaction ft) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void onTabReselected(Tab tab, FragmentTransaction ft) {
+		// TODO Auto-generated method stub
+
 	}
 
 }
