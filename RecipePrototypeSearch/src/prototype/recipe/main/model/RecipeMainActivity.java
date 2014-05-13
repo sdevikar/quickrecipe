@@ -105,6 +105,8 @@ public class RecipeMainActivity extends FragmentActivity implements
 		actionBar.setHomeButtonEnabled(true);
 		actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
 		mViewPager = (ViewPager) findViewById(R.id.tab_pager_layout);
+		
+        mAppSectionsPagerAdapter = new AppSectionsPagerAdapter(getSupportFragmentManager());
         mViewPager.setAdapter(mAppSectionsPagerAdapter);
         mViewPager.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
             @Override
@@ -116,7 +118,7 @@ public class RecipeMainActivity extends FragmentActivity implements
             }
         });
 
-		for (int i = 0; i < 10; i++) {
+		for (int i = 0; i < mAppSectionsPagerAdapter.getCount(); i++) {
 			addActionBarTab(i);
 		}
 
@@ -226,7 +228,7 @@ public class RecipeMainActivity extends FragmentActivity implements
 
 	@Override
 	public void onTabSelected(Tab tab, FragmentTransaction ft) {
-		// TODO Auto-generated method stub
+        mViewPager.setCurrentItem(tab.getPosition());
 
 	}
 
